@@ -68,7 +68,7 @@ ssh -v -i ./id_rsa hal@10.10.10.139
 
 ## Privilege Escalation
 
-I didn't find the user.txt in the "hal" home directory, so i have to find how to authenticate as an other user to have my first flag, let's enumerate the box with my prefer linux priv escalation python [script](https://github.com/roughiz/Arkham-walktrough/blob/master/).
+I didn't find the user.txt in the "hal" home directory, so i have to find how to authenticate as an other user to have my first flag, let's enumerate the box with my prefer linux priv escalation python [script](https://github.com/sleventyeleven/linuxprivchecker).
 First i transfer the script with scp like :
 ```
 $ scp -i ./ssh/id_rsa privsecchecker.py   hal@10.10.10.139:/tmp/ 

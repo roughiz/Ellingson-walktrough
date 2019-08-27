@@ -42,11 +42,11 @@ With some research i found an [article](https://blog.keigher.ca/2014/12/remote-c
 ![debug](https://github.com/roughiz/Ellingson-walktrough/blob/master/debug.png)
 
 ## Caught ssh shell
-All my tests to perform an RCE from the debbug console fails, so i tried to list directories from the box to know if we have accees to a user home :
+All my tests to perform an RCE from the debug console fails, so i tried to list directories from the box to know if we have accees to a user home :
 
 ![list_directories](https://github.com/roughiz/Ellingson-walktrough/blob/master/listdir.png)
 
-The web app is running as "hal" user, and we can trought the debuger console, write in the "/home/hal/.ssh/authorized_keys" and add our key in the first stage. and use this key to authenticate with ssh.
+The web app is running as "hal" user, and we can trought the debuger console, write in the "/home/hal/.ssh/authorized_keys" and add our key and use this key to authenticate with ssh.
 
 Firstly i create an ssh key (i don't want to put my own key in the box!!) :
 ``` 
@@ -81,7 +81,7 @@ $ scp -i ./ssh/id_rsa privsecchecker.py   hal@10.10.10.139:/tmp/
 ```
 #### Setuid binary 
 
-We have a strange setuid binary, but i can't execute it as hal user. let's try to found an other user's credentials.
+We have a strange setuid binary "garbage", but i can't execute it as hal user. let's try to found an other user's credentials.
 ```
 [+] SUID/SGID Files and Directories
     -rwsr-sr-x 1 daemon daemon 51464 Feb 20  2018 /usr/bin/at
@@ -113,14 +113,6 @@ duke:$6$bFjry0BT$OtPFpMfL/KuUZOafZalqHINNX/acVeIDiXXCPo9dPi1YHOp9AAAAnFTfEh.2Ahe
 
 ```
 Here we have some users hashes, so the next step is to crack theses hashes.
-
-```
-$ cat shadow
-theplague:$6$.5ef7Dajxto8Lz3u$Si5BDZZ81UxRCWEJbbQH9mBCdnuptj/aG6mqeu9UfeeSY7Ot9gp2wbQLTAJaahnlTrxN613L6Vner4tO1W.ot/:17964:0:99999:7:::
-hal:$6$UYTy.cHj$qGyl.fQ1PlXPllI4rbx6KM.lW6b3CJ.k32JxviVqCC2AJPpmybhsA8zPRf0/i92BTpOKtrWcqsFAcdSxEkee30:17964:0:99999:7:::
-margo:$6$Lv8rcvK8$la/ms1mYal7QDxbXUYiD7LAADl.yE4H7mUGF6eTlYaZ2DVPi9z1bDIzqGZFwWrPkRrB9G/kbd72poeAnyJL4c1:17964:0:99999:7:::
-duke:$6$bFjry0BT$OtPFpMfL/KuUZOafZalqHINNX/acVeIDiXXCPo9dPi1YHOp9AAAAnFTfEh.2AheGIvXMGMnEFl5DlTAbIzwYc/:17964:0:99999:7:::
-```
 
 Firstly i tried to crack theses hashees with john with the default dictionary "rockyou", but it will take some days, so i have to create a new dictionary from "rockyou" with passwords informations caught before, "... the most common passwords are. Love, Secret, Sex and God"
 
@@ -162,7 +154,7 @@ $ margo@ellingson:~$ /usr/bin/garbage
 Enter access password: 
 ```
 the binary asks for a password, ok let's see if i can found some useful information.
-strings command did it fine and i found the password hardcoded in the binary :
+Strings command did it fine and i found the password hardcoded in the binary :
 ```
 $ strings /usr/bin/garbage
 Balance is $%d
@@ -236,12 +228,13 @@ In x86-64, to call a function, the  program should place the first six integer o
 and the register %rsp is used as the stack pointer, a pointer to the topmost element in the stack.
 
 [x86-64 cheatsheet](http://www.cs.tufts.edu/comp/181/x64_cheatsheet.pdf)
+
 Here per example the binary compare the two strings like :
 ###### strcmp($rdi,$rsi)
 
 #### Segmentation Fault
 
-[SegFault](https://github.com/roughiz/Ellingson-walktrough/blob/master/segfault.png)
+![SegFault](https://github.com/roughiz/Ellingson-walktrough/blob/master/segfault.png)
 
 Let's find how much caracters i need to have a segfault : 
 
@@ -252,6 +245,7 @@ Let's find how much caracters i need to have a segfault :
 #### Binary compiled flag
 Let's check how the binary was compiled and if ASLR is enabled in this box.
 I used the script [checksec](https://github.com/RobinDavid/checksec) to test executable properties like :
+
 ![checksec_analyse](https://github.com/roughiz/Ellingson-walktrough/blob/master/checksec.png)
 
 #### ASLR 
@@ -288,7 +282,7 @@ call setuid(0) to excute the shell as user root, and call the fucntion execve("/
 ###### Nota :
 Libc contains some security mitigations where when you call system() with /bin/sh as argument it drops the privileges (if euid != uid).
 
-we also have to found address of "puts" "/bin/sh" "execve" "setuid", and add the "offset" to address of fucntion in libc, for example :
+we also have to found address of "puts" "/bin/sh" "execve" "setuid", and add the "offset" to any address from libc, per example :
 
 ```
 readelf -s /lib/x86_64-linux-gnu/libc-2.27.so | grep puts 
@@ -299,7 +293,7 @@ libc_sh =0x1b3e9a
 setuid = offset +libc_setuid
 ```
 ##### Asm code :
-The asm code of c code :
+The asm of c code :
 setuid(0);
 execve("/bin/sh",Null,Null);
 

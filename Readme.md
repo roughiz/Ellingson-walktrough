@@ -1,8 +1,9 @@
 ## Enumeration
-I use masscan and nmap for a quick scan, here i use a script which create a keepnote page report from the scan, found it [here](https://github.com/roughiz/EnumNeTKeepNoteReportCreator/blob/master/keepNoteScanNetReportCreator.sh).
+I use masscan and nmap for a quick scan, here i use a script which create a keepnote page report from the scan, found it [here](https://github.com/roughiz/scautofire).
 
 We have two open ports :
 ```
+$ create_SemiNoteFromIpWithMasscan.sh 10.10.10.139  ./keepnote/Lab/htb  Ellingson  tun0
 22/tcp open ssh OpenSSH 7.6p1 Ubuntu 4 (Ubuntu Linux; protocol 2.0)
 | ssh-hostkey: 
 | 2048 49:e8:f1:2a:80:62:de:7e:02:40:a1:f4:30:d2:88:a6 (RSA)
